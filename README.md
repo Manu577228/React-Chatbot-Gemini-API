@@ -15,7 +15,7 @@ Discover the powerful features of Chatbot-by-Bharadwaj that make it a standout p
 - **Voice Responses**: Utilize a female voice to provide answers, enhancing the conversational aspect of the chatbot.
 - **Audio Input**: Accept audio input, convert it to text, and respond accordingly, offering multiple interaction options.
 - **Comprehensive Solutions**: Access a wide range of solutions and responses to various queries, making the chatbot versatile.
-- **Integration**: Built with the Gemini 1.5 flash model, seamlessly integrate the chatbot into any website as per specific requirements, ensuring compatibility and ease of use.
+- **Integration**: Built with the Gemini 1.5 pro model, seamlessly integrate the chatbot into any website as per specific requirements, ensuring compatibility and ease of use.
 - **Animated Cursor**: Featuring an animated cursor for a modern and engaging user experience.
 
 ## Getting Started
