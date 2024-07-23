@@ -4,11 +4,11 @@ import { Mic, Send } from "@mui/icons-material";
 import ChatBox from "./components/ChatBox";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import RingLoader from "react-spinners/RingLoader";
-import AnimatedCursor from "react-animated-cursor"; // Import AnimatedCursor
+import AnimatedCursor from "react-animated-cursor"; 
 
 const API_KEY = "AIzaSyDV7AWgfuD1f3kke1aKDrGG-vRWlLr4Zzs"; 
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
 const App = () => {
   const [messages, setMessages] = useState([]);
@@ -92,7 +92,6 @@ const App = () => {
 
   return (
     <Container maxWidth="md" className="app-container">
-      {/* Animated Cursor */}
       <AnimatedCursor
         innerSize={8}
         outerSize={20}
