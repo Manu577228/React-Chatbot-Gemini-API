@@ -59,9 +59,9 @@ Connect with Me
 
 Let's connect and share our thoughts! Find me on:
 
-LinkedIn
+LinkedIn : https://www.linkedin.com/in/manu-bharadwaj-3507a345/
 
-YouTube
+YouTube : youtube.com/@code-with-Bharadwaj
 
 Your feedback and support are greatly appreciated! If you find this project helpful, please consider giving it a ⭐️.
 
