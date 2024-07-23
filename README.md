@@ -48,11 +48,6 @@ Feel free to open issues or discussions to brainstorm ideas and improve the proj
 Issues and Support
 Encountering any issues? Need support or have questions? Don't hesitate to reach out by opening an issue. I'm here to assist you and resolve any concerns.
 
-Connect with Me
-Let's connect and share our thoughts! Find me on:
-
-LinkedIn
-YouTube
 Your feedback and support are greatly appreciated! If you find this project helpful, please consider giving it a ⭐️.
 
 Thank you for exploring Chatbot-by-Bharadwaj! 🌟
