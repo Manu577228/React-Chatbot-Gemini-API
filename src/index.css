@@ -102,7 +102,7 @@ body {
 
 .message.bot {
   color: #000; 
- background-color: transparent !important; /* This forces the background to be transparent */ 
+ background-color: #fff;
 }
 
 ::-webkit-scrollbar {
