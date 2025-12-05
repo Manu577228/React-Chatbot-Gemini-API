@@ -4,11 +4,12 @@ import { Mic, Send } from "@mui/icons-material";
 import ChatBox from "./components/ChatBox";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import RingLoader from "react-spinners/RingLoader";
-import AnimatedCursor from "react-animated-cursor"; 
+import AnimatedCursor from "react-animated-cursor";
 
-const API_KEY = "AIzaSyDV7AWgfuD1f3kke1aKDrGG-vRWlLr4Zzs"; 
+const API_KEY = "AIzaSyDV7AWgfuD1f3kke1aKDrGG-vRWlLr4Zzs";
+
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 const App = () => {
   const [messages, setMessages] = useState([]);
@@ -33,60 +34,76 @@ const App = () => {
 
   const sendMessage = () => {
     if (!userInput.trim()) return;
-
     appendMessage("User", userInput);
-    setUserInput("");
     fetchReply(userInput);
+    setUserInput("");
   };
 
-  const fetchReply = async (userInput) => {
+  const fetchReply = async (textPrompt) => {
     try {
-      const result = await model.generateContent(userInput);
-      const response = await result.response;
-      let text = await response.text();
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: textPrompt }],
+          },
+        ],
+      });
 
-      text = text.replace(/#\s+/g, "");
-      text = text.replace(
+      const botText =
+        result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "No response received.";
+
+      let formatted = botText;
+
+      formatted = formatted.replace(/#\s+/g, "");
+      formatted = formatted.replace(
         /```javascript([\s\S]*?)```/g,
         "<pre><code>$1</code></pre>"
       );
-      text = text.replace(/(?:\r\n|\r|\n)/g, "<br>");
-      text = text.trim();
-      text = text.replace(/\*/g, "");
+      formatted = formatted.replace(/(?:\r\n|\r|\n)/g, "<br>");
+      formatted = formatted.trim();
+      formatted = formatted.replace(/\*/g, "");
 
       const uniqueLinks = new Set();
-      text = text.replace(
+      formatted = formatted.replace(
         /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gi,
         (match) => {
           if (!uniqueLinks.has(match)) {
             uniqueLinks.add(match);
             return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="footer-link">${match}</a>`;
           }
-          return '';
+          return "";
         }
       );
 
-      appendMessage("Bot", text);
+      appendMessage("Bot", formatted);
     } catch (error) {
-      appendMessage("Bot", "Sorry, I am having trouble connecting to the server.");
       console.error("Error:", error);
+      appendMessage("Bot", "Sorry, I am having trouble connecting to Gemini.");
     }
   };
 
   const startRecognition = () => {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      alert("Speech recognition not supported on this browser.");
+      return;
+    }
+
+    const recognition = new Recognition();
     recognition.lang = "en-US";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
     recognition.start();
     recognition.onresult = (event) => {
-      const speechResult = event.results[0][0].transcript;
-      setUserInput(speechResult);
+      const speechText = event.results[0][0].transcript;
+      setUserInput(speechText);
       sendMessage();
     };
     recognition.onerror = (event) => {
-      console.error("Recognition error:", event.error);
+      console.error("Speech recognition error:", event.error);
     };
   };
 
@@ -103,7 +120,12 @@ const App = () => {
 
       {loading ? (
         <Box
-          sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
         >
           <RingLoader color="#00bcd4" loading={loading} size={150} />
         </Box>
@@ -117,7 +139,7 @@ const App = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="footer-link"
-                style={{ color: "#ff4081" }} // Changed color from "neon red" to a valid hex color
+                style={{ color: "#ff4081" }}
               >
                 Bharadwaj
               </a>
@@ -130,22 +152,24 @@ const App = () => {
             </Box>
           )}
 
-          <Box className="input-controls" sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+          <Box
+            className="input-controls"
+            sx={{ display: "flex", alignItems: "center", mb: 2 }}
+          >
             <TextField
               variant="outlined"
               fullWidth
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  sendMessage();
-                }
+                if (e.key === "Enter") sendMessage();
               }}
               placeholder="Type a message..."
               className="text-field"
               sx={{ flexGrow: 1, mr: 1 }}
               aria-label="Type a message"
             />
+
             <Button
               variant="contained"
               color="primary"
@@ -155,6 +179,7 @@ const App = () => {
             >
               <Send />
             </Button>
+
             <Button
               variant="contained"
               color="secondary"
@@ -168,6 +193,7 @@ const App = () => {
           </Box>
         </Box>
       )}
+
       <Box className="footer">
         <marquee>© 2024 All rights reserved. Chatbot by Bharadwaj</marquee>
       </Box>
