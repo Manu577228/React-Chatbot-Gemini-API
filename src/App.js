@@ -6,7 +6,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import RingLoader from "react-spinners/RingLoader";
 import AnimatedCursor from "react-animated-cursor";
 
-const API_KEY = "AIzaSyDV7AWgfuD1f3kke1aKDrGG-vRWlLr4Zzs";
+const API_KEY = "AIzaSyB6DKywNyzxEqSlFgnRF8Dt60QOODqWsVg";
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
