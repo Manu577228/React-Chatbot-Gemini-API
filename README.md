@@ -38,37 +38,6 @@ Database: SQLite
 
 ---
 
-## 📁 Project Structure
-
-```
-bharadwaj-ai-chat/
-├── backend/
-│   ├── manage.py
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── ...
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   └── ...
-├── .gitignore
-└── README.md
-```
-
----
-
-## 🔐 Environment Variables
-
-Create a `.env` file inside the backend directory:
-
-```
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-Never commit `.env` files to GitHub.
-
----
-
 ## ⚙️ Backend Setup (Django)
 
 ```
