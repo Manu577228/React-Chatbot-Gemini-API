@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Mic, MoreVertical, Paperclip, Smile, Heart } from "lucide-react";
+import { Send, Mic, MoreVertical, Paperclip, Smile, Heart, Trash2 } from "lucide-react";
 
 const BOT_AVATAR = "https://i.postimg.cc/SKBNcms1/Bharadwaj-removebg-preview.png";
 
@@ -7,13 +7,34 @@ const App = () => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
+  // Load chat history on mount
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
-    return () => clearTimeout(timer);
+    const loadHistory = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/chat");
+        const data = await response.json();
+        if (data.messages) {
+          const formatted = data.messages.map(msg => ({
+            sender: msg.sender,
+            message: formatMessage(msg.message),
+            timestamp: new Date(msg.created_at),
+          }));
+          setMessages(formatted);
+        }
+      } catch (error) {
+        console.error("Failed to load history:", error);
+      } finally {
+        setLoading(false);
+        // Keep loading screen visible for minimum 2 seconds
+        setTimeout(() => setShowLoading(false), 2000);
+      }
+    };
+    loadHistory();
   }, []);
 
   useEffect(() => {
@@ -23,14 +44,10 @@ const App = () => {
   }, [messages, isTyping]);
 
   const formatMessage = (text) => {
-    // Remove markdown bold/italic markers and clean up formatting
+    // Only do minimal formatting - preserve most of the original structure
     return text
-      .replace(/\*\*/g, '')  // Remove bold
-      .replace(/\*/g, '')    // Remove italic
-      .replace(/#{1,6}\s/g, '') // Remove headers
-      .replace(/`{3}[\s\S]*?`{3}/g, (match) => match.replace(/`/g, '')) // Clean code blocks
+      .replace(/\*\*(.+?)\*\*/g, '$1') // Remove bold markers but keep text
       .replace(/`([^`]+)`/g, '$1') // Remove inline code markers
-      .replace(/\n{3,}/g, '\n\n') // Max 2 line breaks
       .trim();
   };
 
@@ -77,14 +94,41 @@ const App = () => {
     recognition.onresult = (e) => setUserInput(e.results[0][0].transcript);
   };
 
-  if (loading) {
+  const clearChat = async () => {
+    if (!confirm("Clear entire conversation history?")) return;
+    
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/chat/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.status === "deleted") {
+        setMessages([]);
+        console.log("Chat history cleared successfully");
+      } else {
+        throw new Error("Delete failed");
+      }
+    } catch (error) {
+      console.error("Failed to clear chat:", error);
+      alert("Failed to clear chat. Check backend connection and console for details.");
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setUserInput(suggestion);
+  };
+
+  if (showLoading) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.loaderWrapper}>
-          <div style={styles.loader}></div>
-          <div style={styles.loaderGlow}></div>
+          <img src={BOT_AVATAR} alt="Loading" style={styles.loaderImage} />
+          <div style={styles.loaderRing}></div>
         </div>
-        <p style={styles.loadingText}>Initializing AI Assistant...</p>
+        <p style={styles.loadingText}>Initializing Bharadwaj AI...</p>
       </div>
     );
   }
@@ -109,9 +153,29 @@ const App = () => {
             </p>
           </div>
         </div>
-        <button style={styles.iconBtn}>
-          <MoreVertical size={24} color="#c084fc" />
-        </button>
+        <div style={styles.headerButtons}>
+          {messages.length > 0 && (
+            <button 
+              onClick={clearChat} 
+              style={styles.clearBtn}
+              title="Clear chat history"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
+                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.5)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
+              }}
+            >
+              <Trash2 size={16} style={{ marginRight: "6px" }} />
+              Clear Chat
+            </button>
+          )}
+          <button style={styles.iconBtn}>
+            <MoreVertical size={24} color="#c084fc" />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -128,8 +192,34 @@ const App = () => {
               </p>
             </div>
             <div style={styles.suggestionsContainer}>
-              <button style={styles.suggestionBtn}>Tell me a joke</button>
-              <button style={styles.suggestionBtn}>How can you help?</button>
+              <button 
+                style={styles.suggestionBtn}
+                onClick={() => handleSuggestionClick("Tell me a joke")}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(168, 85, 247, 0.2)";
+                  e.currentTarget.style.borderColor = "rgba(168, 85, 247, 0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(168, 85, 247, 0.1)";
+                  e.currentTarget.style.borderColor = "rgba(168, 85, 247, 0.3)";
+                }}
+              >
+                Tell me a joke
+              </button>
+              <button 
+                style={styles.suggestionBtn}
+                onClick={() => handleSuggestionClick("How can you help?")}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(168, 85, 247, 0.2)";
+                  e.currentTarget.style.borderColor = "rgba(168, 85, 247, 0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(168, 85, 247, 0.1)";
+                  e.currentTarget.style.borderColor = "rgba(168, 85, 247, 0.3)";
+                }}
+              >
+                How can you help?
+              </button>
             </div>
           </div>
         )}
@@ -150,6 +240,7 @@ const App = () => {
                 ...styles.messageBubble,
                 ...(m.sender === "user" ? styles.userBubble : styles.botBubble),
               }}
+              className="message-bubble"
             >
               <p style={styles.messageText}>
                 {m.message.split('\n').map((line, i) => (
@@ -212,6 +303,16 @@ const App = () => {
               opacity: userInput.trim() ? 1 : 0.5,
               cursor: userInput.trim() ? "pointer" : "not-allowed",
             }}
+            onMouseEnter={(e) => {
+              if (userInput.trim()) {
+                e.currentTarget.style.transform = "scale(1.05)";
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(147, 51, 234, 0.5)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(147, 51, 234, 0.3)";
+            }}
           >
             <Send size={20} />
           </button>
@@ -226,6 +327,14 @@ const App = () => {
               target="_blank" 
               rel="noopener noreferrer"
               style={styles.footerLink}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#a855f7";
+                e.currentTarget.style.borderBottomColor = "#a855f7";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#c084fc";
+                e.currentTarget.style.borderBottomColor = "transparent";
+              }}
             >
               Bharadwaj
             </a>
@@ -253,6 +362,26 @@ const keyframesStyles = `
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Custom scrollbar styles */
+  .message-bubble::-webkit-scrollbar {
+    width: 6px;
+  }
+  .message-bubble::-webkit-scrollbar-track {
+    background: rgba(168, 85, 247, 0.1);
+    border-radius: 10px;
+  }
+  .message-bubble::-webkit-scrollbar-thumb {
+    background: rgba(168, 85, 247, 0.5);
+    border-radius: 10px;
+  }
+  .message-bubble::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 85, 247, 0.7);
   }
 `;
 
@@ -351,6 +480,24 @@ const styles = {
     display: "inline-block",
     animation: "pulse 2s ease-in-out infinite",
   },
+  headerButtons: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+  clearBtn: {
+    background: "rgba(239, 68, 68, 0.1)",
+    border: "1px solid rgba(239, 68, 68, 0.3)",
+    color: "#fca5a5",
+    padding: "8px 16px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: 500,
+    transition: "all 0.2s",
+    display: "flex",
+    alignItems: "center",
+  },
   iconBtn: {
     background: "transparent",
     border: "none",
@@ -448,11 +595,17 @@ const styles = {
     borderRadius: "16px",
     padding: "12px 16px",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+    wordWrap: "break-word",
+    overflowWrap: "break-word",
+    whiteSpace: "pre-wrap",
   },
   userBubble: {
     background: "linear-gradient(135deg, #9333ea 0%, #a855f7 100%)",
     color: "white",
     borderTopRightRadius: "4px",
+    maxHeight: "500px",
+    overflowY: "auto",
+    overflowX: "hidden",
   },
   botBubble: {
     background: "rgba(30, 41, 59, 0.8)",
@@ -460,11 +613,18 @@ const styles = {
     color: "#f1f5f9",
     border: "1px solid rgba(168, 85, 247, 0.2)",
     borderTopLeftRadius: "4px",
+    maxHeight: "500px",
+    overflowY: "auto",
+    overflowX: "hidden",
   },
   messageText: {
     fontSize: "15px",
     lineHeight: "1.6",
     margin: 0,
+    wordBreak: "break-word",
+    overflowWrap: "anywhere",
+    whiteSpace: "pre-wrap",
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   },
   messageTime: {
     fontSize: "12px",
@@ -555,32 +715,37 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    gap: "32px",
   },
   loaderWrapper: {
     position: "relative",
+    width: "120px",
+    height: "120px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  loader: {
-    width: "96px",
-    height: "96px",
+  loaderImage: {
+    width: "80px",
+    height: "80px",
     borderRadius: "50%",
-    border: "4px solid rgba(168, 85, 247, 0.3)",
-    borderTopColor: "#a855f7",
-    animation: "spin 1s linear infinite",
+    zIndex: 2,
+    position: "relative",
   },
-  loaderGlow: {
+  loaderRing: {
     position: "absolute",
-    inset: 0,
-    width: "96px",
-    height: "96px",
+    width: "120px",
+    height: "120px",
     borderRadius: "50%",
-    background: "rgba(168, 85, 247, 0.1)",
-    filter: "blur(20px)",
-    animation: "pulse 2s ease-in-out infinite",
+    border: "3px solid transparent",
+    borderTopColor: "#a855f7",
+    borderRightColor: "#ec4899",
+    animation: "rotate 1.2s linear infinite",
+    boxShadow: "0 0 20px rgba(168, 85, 247, 0.3)",
   },
   loadingText: {
     color: "white",
     fontSize: "20px",
-    marginTop: "32px",
     fontWeight: 300,
     letterSpacing: "1px",
     animation: "pulse 2s ease-in-out infinite",
